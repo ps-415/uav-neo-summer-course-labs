@@ -43,13 +43,16 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # GOAL: report the average edge strength in the downward image.
-    #
-    # Grayscale the image, blur it with a KERNEL_SIZE box filter so single-pixel noise
-    # does not dominate, then use a Sobel filter (across and down) to measure how fast
-    # brightness changes and combine the two directions into one edge magnitude. Print the
-    # mean magnitude. Advance _timer and finish at HOVER_TIME. See the README (Key terms).
-
+    _timer += drone.get_delta_time()
+    image = drone.camera.get_downward_image()
+    gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
+    blurred = cv2.blur(gray, (KERNEL_SIZE, KERNEL_SIZE))
+    sobel_x = cv2.Sobel(blurred, cv2.CV_64F, 1, 0, ksize=3)
+    sobel_y = cv2.Sobel(blurred, cv2.CV_64F, 0, 1, ksize=3)
+    magnitude = np.sqrt(sobel_x**2 + sobel_y**2)
+    if _timer >= HOVER_TIME:
+        print(f"[Step 3] Mean edge strength after blur: {magnitude.mean():.2f}")
+        _done = True
     ###### END PUT CODE HERE #########
     ##################################
     return _done

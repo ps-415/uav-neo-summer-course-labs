@@ -6,6 +6,7 @@ Week 2/3 Lab — Step 2: Fit a Line (Least Squares)
 Fit y = m*x + b to the bright edge pixels with linear regression.
 """
 
+from pickle import FALSE
 import drone_core
 import drone_utils as uav_utils
 import cv2
@@ -35,7 +36,10 @@ def fit_line(points):
     np.argwhere, so column = x and row = y. See the README (Key terms) for the fit."""
     ##################################
     #### START PUT CODE HERE #########
-    m, b = 0.0, 0.0
+    points = points.astype(np.float64)
+    ys = points[:, 0]
+    xs = points[:, 1]
+    m, b = np.polyfit(xs, ys, 1)
     ###### END PUT CODE HERE #########
     ##################################
     return m, b
@@ -53,12 +57,17 @@ def update(drone):
     drone.flight.stop()   # hover in place
     ##################################
     #### START PUT CODE HERE #########
-
-    # Build the bright-edge mask like Step 1 and collect the (row, col) of every bright
-    # pixel. If there are fewer than MIN_PIXELS, there is not enough edge to fit -> return
-    # False. Otherwise call fit_line() and print m, b. Advance _timer and finish at
-    # HOVER_TIME.
-
+    _timer += drone.get_delta_time()
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.bright_mask(image, V_MIN) > 0
+    points = np.argwhere(mask)
+    if len(points) < MIN_PIXELS:
+        return False
+    m, b = fit_line(points)
+    if _timer >= HOVER_TIME:
+        print(f"[Step 2] Fitted edge slope m={m:.3f}, intercept b={b:.1f}")
+        _done = True
+    
     ###### END PUT CODE HERE #########
     ##################################
     return _done

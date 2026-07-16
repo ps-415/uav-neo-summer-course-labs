@@ -46,19 +46,21 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # GOAL: fly forward at FORWARD_PITCH while strafing (roll) to keep the bright
-    # edge under the middle of the downward camera.
-    #
-    # Tools: drone.camera.get_downward_image(); neo_lab.bright_mask(image, V_MIN);
-    #        np.argwhere(mask) -> bright pixel (row, col); uav_utils.clamp(...);
-    #        drone.flight.send_pcmd(pitch, roll, yaw, throttle).
-    #
-    # The average column of the bright pixels tells you how far off-center the edge
-    # is. Turn that pixel offset into a roll command (clamped to MAX_ROLL): an edge
-    # right of center means roll right to chase it. If you see too few bright pixels,
-    # hold position rather than steering on noise -- but keep the timer running every
-    # frame and finish after FOLLOW_TIME regardless, so losing the edge never hangs.
-
+    _timer += drone.get_delta_time()
+    image = drone.camera.get_downward_image()
+    mask = neo_lab.bright_mask(image, V_MIN) > 0
+    points = np.argwhere(mask)
+    if len(points) < MIN_PIXELS:
+        drone.flight.stop()
+    else:
+        edge_col = points[:, 1].mean()
+        offset = (edge_col - IMAGE_CENTER) / IMAGE_CENTER
+        roll = uav_utils.clamp(offset * MAX_ROLL, -MAX_ROLL, MAX_ROLL)
+        drone.flight.send_pcmd(FORWARD_PITCH, roll, 0, 0)
+    if _timer >= FOLLOW_TIME:
+        drone.flight.stop()
+        print("[Step 3] Finished following the edge")
+        _done = True
     ###### END PUT CODE HERE #########
     ##################################
     return _done

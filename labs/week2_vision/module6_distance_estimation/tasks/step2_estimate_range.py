@@ -50,18 +50,22 @@ def update(drone):
         return True
     ##################################
     #### START PUT CODE HERE #########
-
-    # GOAL: fly toward the gate, estimating distance from its apparent width, and
-    # stop once distance <= STOP_DIST.
-    #
-    # Tools: drone.camera.get_color_image(); neo_lab.largest_cyan_gate(image, MIN_AREA);
-    #        cv2.boundingRect(contour) -> (x, y, w, h); uav_utils.clamp(...);
-    #        drone.flight.send_pcmd(pitch, roll, yaw, throttle), drone.flight.stop().
-    #
-    # No gate -> spin at SEARCH_YAW to find one. With a gate, recover the distance from
-    # FOCAL_PX, REAL_GATE_WIDTH, and the box width (invert the Module 1 projection). Yaw to
-    # keep its box centered on COL_CENTER and add APPROACH_PITCH forward. Stop and finish
-    # once distance <= STOP_DIST.
+    image = drone.camera.get_color_image()
+    best = neo_lab.largest_cyan_gate(image, MIN_AREA)
+    if best is None:
+        drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)
+        return False
+    x, y, w, h = cv2.boundingRect(best)
+    distance = FOCAL_PX * REAL_GATE_WIDTH / max(w, 1)
+    gate_col = x + w / 2.0
+    err = (gate_col - COL_CENTER) / COL_CENTER
+    yaw = uav_utils.clamp(err * MAX_YAW, -MAX_YAW, MAX_YAW)
+    if distance <= STOP_DIST:
+        drone.flight.stop()
+        print(f"[Step 2] Reached gate, distance ~ {distance:.2f} m")
+        _done = True
+        return True
+    drone.flight.send_pcmd(APPROACH_PITCH, 0, yaw, 0)
 
     ###### END PUT CODE HERE #########
     ##################################

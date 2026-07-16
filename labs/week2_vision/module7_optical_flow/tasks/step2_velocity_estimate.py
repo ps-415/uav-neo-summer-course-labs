@@ -41,17 +41,21 @@ _prev_pts = None
 _timer = 0.0
 _interval = 0.0        # time accumulated since the last processed frame
 _frame = 0
+_est = (0.0, 0.0)
+_true = (0.0, 0.0)
 _done = False
-
+ 
 def reset():
-    global _prev_gray, _prev_pts, _timer, _interval, _frame, _done
+    global _prev_gray, _prev_pts, _timer, _interval, _frame, _est, _true, _done
     _prev_gray = None
     _prev_pts = None
     _timer = 0.0
     _interval = 0.0
     _frame = 0
+    _est = (0.0, 0.0)
+    _true = (0.0, 0.0)
     _done = False
-
+ 
 
 def update(drone):
     global _prev_gray, _prev_pts, _timer, _interval, _frame, _done
@@ -60,21 +64,39 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # GOAL: print an estimated horizontal velocity from optical flow next to the true
-    # velocity, so you can see how well vision tracks motion.
-    #
-    # Tools: drone.camera.get_downward_image(); neo_lab.height(drone);
-    #        drone.physics.get_linear_velocity(); drone.get_delta_time(); send_pcmd(...);
-    #        plus the sparse optical-flow tracking you built in Step 1.
-    #
-    # Every frame: drift (PROBE_PITCH), add dt to _timer AND to _interval, and _frame += 1.
-    # Only every SKIP-th frame: track corner points (sparse flow, like Step 1) and average
-    # the kept points' displacement in pixels. Convert that to meters/second: one pixel's
-    # ground footprint grows with height and the camera's field of view (use HFOV_TAN and
-    # IMAGE_WIDTH), and divide by _interval (the time between PROCESSED frames, not one dt);
-    # then reset _interval. The camera moves opposite the scene flow (sign flip). Finish at
-    # RUN_TIME, printing the estimate vs. true velocity. See the README (Key terms).
-
+    dt = drone.get_delta_time()
+    drone.flight.send_pcmd(PROBE_PITCH, 0, 0, 0)
+    _timer += dt
+    _interval += dt
+    _frame += 1
+    if _frame % SKIP == 0:
+        gray = cv2.cvtColor(drone.camera.get_downward_image(), cv2.COLOR_BGR2GRAY)
+        if _prev_gray is None or _prev_pts is None or len(_prev_pts) < MIN_PTS or _interval <= 0:
+            _prev_pts = cv2.goodFeaturesToTrack(gray, **FEATURE_PARAMS)
+        else:
+            new_pts, status, _err = cv2.calcOpticalFlowPyrLK(_prev_gray, gray,
+                                                             _prev_pts, None, **LK_PARAMS)
+            if new_pts is not None and status is not None:
+                keep = status.flatten() == 1
+                good_new = new_pts[keep].reshape(-1, 2)
+                good_old = _prev_pts[keep].reshape(-1, 2)
+                if len(good_new) > 0:
+                    disp = good_new - good_old
+                    mean_dx = float(disp[:, 0].mean())
+                    mean_dy = float(disp[:, 1].mean())
+                    height = max(neo_lab.height(drone), 0.1)
+                    mpp = 2.0 * height * HFOV_TAN / IMAGE_WIDTH
+                    _est = (-mean_dx * mpp / _interval, -mean_dy * mpp / _interval)
+                    vx, vy, vz = drone.physics.get_linear_velocity()
+                    _true = (float(vx), float(vz))
+                    _prev_pts = good_new.reshape(-1, 1, 2)
+        _prev_gray = gray
+        _interval = 0.0
+    if _timer >= RUN_TIME:
+        drone.flight.stop()
+        print(f"[Step 2] flow est (x,z)=({_est[0]:.2f},{_est[1]:.2f})  "
+              f"true (x,z)=({_true[0]:.2f},{_true[1]:.2f}) m/s")
+        _done = True
     ###### END PUT CODE HERE #########
     ##################################
     return _done
