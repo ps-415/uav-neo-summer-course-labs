@@ -45,7 +45,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    output = kp * err + ki * err_int + kd * err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -66,17 +66,44 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # GOAL: yaw with a PID loop so a glowing gate stays centered in the forward
-    # camera; finish once it is centered (abs(error) < CENTER_TOL) for HOLD_TIME.
-    #
-    # Available helpers: drone.camera.get_color_image(); drone.get_delta_time();
-    #   neo_lab.gate_nearest_center(...) and neo_lab.gate_nearest_to(...) to find gates;
-    #   uav_utils.get_contour_center; uav_utils.clamp; your pid_control() above.
-    #
-    # Lock onto ONE gate (store its column in _target_col) so the target does not jump
-    # between gates. Turn the gate's horizontal offset from the image center into a
-    # normalized error, PID it to a yaw command clamped to MAX_YAW, and sweep at SEARCH_YAW
-    # when no gate is in view. See the README (Key terms) and Week 2 for finding gates.
+    dt = drone.get_delta_time()
+    image = drone.camera.get_color_image()
+
+    if _target_col is None:
+        best = neo_lab.gate_nearest_center(image, V_MIN, MIN_AREA)
+    else:
+        best = neo_lab.gate_nearest_to(image, _target_col, V_MIN, MIN_AREA)
+
+    if best is None:
+        drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)
+        _target_col = None
+        _err_int = 0.0
+        _hold = 0.0
+        return False
+
+    row, col = uav_utils.get_contour_center(best)
+    _target_col = col
+    error = (col - COL_CENTER) / COL_CENTER
+
+    _err_int = uav_utils.clamp(_err_int + error * dt, -1.0, 1.0)
+    err_dot = (error - _prev_err) / dt if dt > 0 else 0.0
+    _prev_err = error
+
+    yaw = uav_utils.clamp(
+        pid_control(error, _err_int, err_dot, KP, KI, KD),
+        -MAX_YAW, MAX_YAW
+    )
+    drone.flight.send_pcmd(0, 0, yaw, 0)
+
+    if abs(error) < CENTER_TOL:
+        _hold += dt
+    elif abs(error) > 2.0 * CENTER_TOL:
+        _hold = 0.0
+ 
+    if _hold >= HOLD_TIME:
+        drone.flight.stop()
+        print("[Step 3] Locked onto the gate")
+        _done = True
 
     ###### END PUT CODE HERE #########
     ##################################

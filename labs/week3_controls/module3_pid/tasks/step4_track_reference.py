@@ -9,6 +9,7 @@ Heights are measured above the ground sampled at launch.
 """
 
 import math
+from nt import error
 
 import drone_core
 import drone_utils as uav_utils
@@ -60,7 +61,7 @@ def pid_control(err, err_int, err_dot, kp, ki, kd):
     """Return the PID controller output from the three gain terms (see README, Key terms)."""
     ##################################
     #### START PUT CODE HERE #########
-    output = 0.0
+    output = kp * err + ki * err_int + kd * err_dot
     ###### END PUT CODE HERE #########
     ##################################
     return output
@@ -85,16 +86,16 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # GOAL: keep the drone ON the moving target r from reference(_t), not behind it.
-    #
-    # Run PID on the height error (r - neo_lab.height(drone)) exactly as in Step 1:
-    # track the integral (clamp to +/-INT_CLAMP) and derivative yourself, then call
-    # pid_control(...). THEN add a feedforward term: the target is already moving at
-    # r_dot, so command that speed directly (KFF * r_dot) instead of waiting for error
-    # to build. Sum feedback + feedforward, clamp to +/-THROTTLE_LIMIT, and send it as
-    # throttle. Update _max_err with the largest abs(error) so far. See the README
-    # ("Tracking a moving target") for why the feedforward term removes the lag.
+    error = r - neo_lab.height(drone)
+    _err_int = uav_utils.clamp(_err_int + error * dt, -INT_CLAMP, INT_CLAMP)
+    err_dot = (error - _prev_err) / dt if dt>0 else 0.0
+    _prev_err = error
 
+    feedback = pid_controller(error, _err_int, err_dot, KP, KI, KD)
+    throttle = uav_utils.clamp(feedback +KFF * r_dot, -THROTTLE_LIMIT, THROTTLE_LIMIT)
+    drone.flight.send_pcmd(0, 0, 0, throttle)
+
+    _max_err = max(_max_err, abs(error))  
     ###### END PUT CODE HERE #########
     ##################################
     if _t >= DURATION:
