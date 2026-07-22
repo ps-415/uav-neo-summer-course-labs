@@ -21,10 +21,10 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-TARGET_HEIGHT = 5.0    # meters above ground
+TARGET_HEIGHT = 0.5    # meters above ground
 KP = 0.2              # throttle ~ 12 m/s per unit, so keep small
 THROTTLE_LIMIT = 0.5
-TOL = 0.4            # P-control leaves a small steady-state droop
+TOL = 0.2            # P-control leaves a small steady-state droop
 HOLD_TIME = 3.0      # seconds on target before done
 
 # -- Module-level state -----------------------------------------------------
@@ -58,7 +58,7 @@ def update(drone):
 
 if __name__ == "__main__":
     _drone = drone_core.create_drone()
-    _launcher = neo_lab.Launcher(3.0)
+    _launcher = neo_lab.Launcher()
 
     def start():
         _launcher.reset()

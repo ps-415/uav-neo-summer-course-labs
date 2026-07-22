@@ -3,7 +3,7 @@ MIT BWSI Autonomous Drone Racing Course - UAV Neo
 GNU General Public License v3.0
 
 Week 2/3 Lab — Step 2: Fit a Line (Least Squares)
-Fit y = m*x + b to the bright edge pixels with linear regression.
+Fit y = m*x + b to the colored line pixels with linear regression.
 """
 
 import drone_core
@@ -22,9 +22,10 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-V_MIN      = 200
-MIN_PIXELS = 200
-HOVER_TIME = 3.0
+S_MIN         = 100
+MIN_PIXELS    = 200
+ADVANCE_PITCH = 0.15      # fly forward off the spawn pad to reach the line
+ADVANCE_TIME  = 8.0       # seconds of forward flight before fitting
 
 # -- Module-level state -----------------------------------------------------
 _timer = 0.0
@@ -54,10 +55,10 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # Build the bright-edge mask like Step 1 and collect the (row, col) of every bright
-    # pixel. If there are fewer than MIN_PIXELS, there is not enough edge to fit -> return
-    # False. Otherwise call fit_line() and print m, b. Advance _timer and finish at
-    # HOVER_TIME.
+    # First fly forward (ADVANCE_PITCH) for ADVANCE_TIME to leave the spawn pad, then hover.
+    # Build the colored-line mask like Step 1 and collect the (row, col) of every line pixel.
+    # If there are fewer than MIN_PIXELS, there is not enough line to fit -> return False.
+    # Otherwise call fit_line() and print m, b, then set _done.
 
     ###### END PUT CODE HERE #########
     ##################################
@@ -66,7 +67,7 @@ def update(drone):
 
 if __name__ == "__main__":
     _drone = drone_core.create_drone()
-    _launcher = neo_lab.Launcher(3.0)
+    _launcher = neo_lab.Launcher()
 
     def start():
         _launcher.reset()

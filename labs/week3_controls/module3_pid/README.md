@@ -105,13 +105,16 @@ drone sim course/week3_controls/module3_pid/main.py            # all steps, your
 drone sim course/week3_controls/module3_pid/main_solution.py   # reference flight
 ```
 
-Press **Enter** in the simulator window to start.
+Press **Enter** in the simulator window to start. **Step 3 needs a gate scene** (e.g.
+**LabD_GateNavigation**) with a gate ahead: the ArUco tags decode only up close, so Step 3 creeps
+forward while scanning until the tags read, then yaws to center the gate — or lands after
+`SEARCH_TIMEOUT` if it never finds one (a gate off to the side or absent will time out).
 
 ## Steps
 
 1. **`step1_pid_altitude.py`** — hold a target height with a full PID controller
 2. **`step2_position_hold.py`** — fly a set distance forward (PID on integrated position)
-3. **`step3_visual_servo.py`** — yaw with a PID loop to lock onto a glowing gate
+3. **`step3_visual_servo.py`** — yaw with a PID loop to lock onto a gate
 4. **`step4_track_reference.py`** — follow a height that keeps moving, using PID + feedforward
 
 ## What to expect
@@ -133,7 +136,7 @@ rising-and-falling height reference, and land.
 | `NameError: name 'image' is not defined` (Step 3) | Capture the frame: `image = drone.camera.get_color_image()`. |
 | Altitude oscillates and grows | Integral windup — make sure you clamp `_err_int` to `±INT_CLAMP`, and add some `Kd`. |
 | Step 2 overshoots the distance | Use velocity as the derivative term (`err_dot = -velocity[2]`) so it brakes early; raise `KD`. |
-| Step 3 jumps between gates and never locks | Track one gate: store `_target_col` and use `gate_nearest_to`, not `gate_nearest_center`, after the first frame. |
+| Step 3 never sees a gate | ArUco tags decode only up close — start with a gate ahead so the forward-creep search can reach it; a gate off to the side or absent will time out and land. |
 | Step never finishes | Check your "settled" timer logic — it must require staying within tolerance for the full hold time. |
 | Step 4 always trails the target (large max error) | You left out the feedforward — add `KFF * r_dot` to the throttle so you command the target's speed, not just react to error. |
 

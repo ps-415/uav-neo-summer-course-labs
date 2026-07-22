@@ -2,8 +2,8 @@
 MIT BWSI Autonomous Drone Racing Course - UAV Neo
 GNU General Public License v3.0
 
-Week 2/3 Lab — Step 1: Detect the Bright Edge Pixels
-Find the glowing gate-edge pixels in the downward camera.
+Week 2/3 Lab — Step 1: Detect the Line Pixels
+Find the colored line pixels in the downward camera.
 """
 
 import drone_core
@@ -22,8 +22,9 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-V_MIN      = 200
-HOVER_TIME = 3.0
+S_MIN         = 100
+ADVANCE_PITCH = 0.15      # fly forward off the spawn pad to reach the line
+ADVANCE_TIME  = 8.0       # seconds of forward flight before reporting
 
 # -- Module-level state -----------------------------------------------------
 _timer = 0.0
@@ -43,9 +44,10 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
 
-    # Gate edges glow bright, so threshold by brightness (HSV Value): neo_lab.bright_mask(
-    # image, V_MIN) gives a mask of the bright pixels. Count them, and after HOVER_TIME
-    # print the count and set _done. See the README (Key terms).
+    # The drone spawns on a colored landing pad, so first fly forward (ADVANCE_PITCH) for
+    # ADVANCE_TIME to reach the line, then hover. The line is vivid against a grey floor, so
+    # threshold by saturation: neo_lab.saturated_mask(image, S_MIN) gives a mask of the line
+    # pixels. Count them, print the count, and set _done. See the README (Key terms).
 
     ###### END PUT CODE HERE #########
     ##################################
@@ -54,12 +56,12 @@ def update(drone):
 
 if __name__ == "__main__":
     _drone = drone_core.create_drone()
-    _launcher = neo_lab.Launcher(3.0)
+    _launcher = neo_lab.Launcher()
 
     def start():
         _launcher.reset()
         reset()
-        print("Step 1: Detect the Bright Edge Pixels")
+        print("Step 1: Detect the Line Pixels")
 
     def _update():
         if not _launcher.done:        # arm + climb to a safe height first
