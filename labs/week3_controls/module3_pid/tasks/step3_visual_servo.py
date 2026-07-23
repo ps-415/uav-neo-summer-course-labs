@@ -69,20 +69,15 @@ def update(drone):
     dt = drone.get_delta_time()
     image = drone.camera.get_color_image()
 
-    if _target_col is None:
-        best = neo_lab.gate_nearest_center(image, V_MIN, MIN_AREA)
-    else:
-        best = neo_lab.gate_nearest_to(image, _target_col, V_MIN, MIN_AREA)
+    gate = neo_lab.detect_gate(image)
 
-    if best is None:
+    if gate is None:
         drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)
-        _target_col = None
         _err_int = 0.0
         _hold = 0.0
         return False
 
-    row, col = uav_utils.get_contour_center(best)
-    _target_col = col
+    col = gate.cx
     error = (col - COL_CENTER) / COL_CENTER
 
     _err_int = uav_utils.clamp(_err_int + error * dt, -1.0, 1.0)

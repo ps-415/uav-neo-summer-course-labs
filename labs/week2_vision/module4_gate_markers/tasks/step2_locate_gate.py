@@ -44,11 +44,13 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
     _timer += drone.get_delta_time()
-    image = drone.camera.get_downward_image()
-    mask = neo_lab.bright_mask(image, V_MIN)
-    contours, _ = cv2.findContours(mask, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
+        return False
     if _timer >= HOVER_TIME:
-        print(f"[Step 1] Found {len(contours)} glowing-edge contour(s) below the drone")
+        print(f"[Step 1] Gate center=({gate.cx:.0f}, {gate.cy:.0f}), "
+              f"span={gate.span:.0f}px, tags={gate.count}")
         _done = True
 
     ###### END PUT CODE HERE #########

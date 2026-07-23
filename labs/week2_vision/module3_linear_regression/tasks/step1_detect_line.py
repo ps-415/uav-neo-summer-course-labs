@@ -44,10 +44,10 @@ def update(drone):
     #### START PUT CODE HERE #########
     _timer += drone.get_delta_time()
     image = drone.camera.get_downward_image()
-    edge_mask = neo_lab.bright_mask(image, V_MIN) > 0
-    pixel_count = np.count_nonzero(edge_mask)
+    line_mask = neo_lab.saturated_mask(image, 100) > 0
+    pixel_count = np.count_nonzero(line_mask)
     if _timer >= HOVER_TIME:
-        print(f"[Step 1] Found {pixel_count} bright edge pixels")
+        print(f"[Step 1] Found {pixel_count} colored line pixels")
         _done = True
     ###### END PUT CODE HERE #########
     ##################################

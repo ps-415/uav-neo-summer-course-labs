@@ -51,13 +51,12 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
     image = drone.camera.get_color_image()
-    best = neo_lab.largest_cyan_gate(image, MIN_AREA)
-    if best is None:
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
         drone.flight.send_pcmd(0, 0, SEARCH_YAW, 0)
         return False
-    x, y, w, h = cv2.boundingRect(best)
-    distance = FOCAL_PX * REAL_GATE_WIDTH / max(w, 1)
-    gate_col = x + w / 2.0
+    distance = FOCAL_PX * REAL_GATE_WIDTH / max(gate.tag_px, 1)
+    gate_col = gate.cx
     err = (gate_col - COL_CENTER) / COL_CENTER
     yaw = uav_utils.clamp(err * MAX_YAW, -MAX_YAW, MAX_YAW)
     if distance <= STOP_DIST:

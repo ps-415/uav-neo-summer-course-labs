@@ -48,7 +48,7 @@ def update(drone):
 
     _timer += drone.get_delta_time()
     image = drone.camera.get_downward_image()
-    mask = neo_lab.bright_mask(image, V_MIN) > 0
+    mask = neo_lab.saturated_mask(image, 100) > 0
     points = np.argwhere(mask)
     if len(points) < MIN_PIXELS:
         drone.flight.stop()

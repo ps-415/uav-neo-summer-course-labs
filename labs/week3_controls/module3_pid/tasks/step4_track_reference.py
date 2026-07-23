@@ -9,7 +9,6 @@ Heights are measured above the ground sampled at launch.
 """
 
 import math
-from nt import error
 
 import drone_core
 import drone_utils as uav_utils
@@ -91,7 +90,7 @@ def update(drone):
     err_dot = (error - _prev_err) / dt if dt>0 else 0.0
     _prev_err = error
 
-    feedback = pid_controller(error, _err_int, err_dot, KP, KI, KD)
+    feedback = pid_control(error, _err_int, err_dot, KP, KI, KD)
     throttle = uav_utils.clamp(feedback +KFF * r_dot, -THROTTLE_LIMIT, THROTTLE_LIMIT)
     drone.flight.send_pcmd(0, 0, 0, throttle)
 

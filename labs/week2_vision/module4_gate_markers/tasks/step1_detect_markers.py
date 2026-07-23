@@ -44,15 +44,13 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
     _timer += drone.get_delta_time()
-    image = drone.camera.get_downward_image()
-    best = neo_lab.largest_bright_contour(image, V_MIN, MIN_AREA)
-    if best is None:
+    image = drone.camera.get_color_image()
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
         return False
-    center = uav_utils.get_contour_center(best)
-    area = uav_utils.get_contour_area(best)
     if _timer >= HOVER_TIME:
-        print(f"[Step 2] Largest gate at row={center[0]}, col={center[1]}, "
-              f"area={area:.0f}")
+        print(f"[Step 2] Gate at cx={gate.cx:.0f}, cy={gate.cy:.0f}, "
+              f"tags={gate.count}, ids={gate.ids}")
         _done = True
     ###### END PUT CODE HERE #########
     ##################################

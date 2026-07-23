@@ -46,12 +46,12 @@ def update(drone):
     #### START PUT CODE HERE #########
     _timer += drone.get_delta_time()
     image = drone.camera.get_color_image()
-    best = neo_lab.largest_cyan_gate(image, MIN_AREA)
-    if best is None:
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
         return False
-    x, y, w, h = cv2.boundingRect(best)
     if _timer >= HOVER_TIME:
-        print(f"[Step 2] Gate bounding box: x={x}, y={y}, w={w}, h={h}")
+        print(f"[Step 2] Gate bounding box: cx={gate.cx:.0f}, cy={gate.cy:.0f}, "
+              f"span={gate.span:.0f}, tags={gate.count}")
         _done = True
 
     ###### END PUT CODE HERE #########

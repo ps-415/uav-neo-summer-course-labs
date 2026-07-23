@@ -44,13 +44,12 @@ def update(drone):
     ##################################
     #### START PUT CODE HERE #########
     image = drone.camera.get_color_image()
-    best = neo_lab.largest_cyan_gate(image, MIN_AREA)
-    if best is None:
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
         return False
-    x, y, w, h = cv2.boundingRect(best)
     _timer += drone.get_delta_time()
     if _timer >= HOVER_TIME:
-        print(f"[Step 1] Gate apparent width = {w} px")
+        print(f"[Step 1] Gate tag apparent size = {gate.tag_px:.0f} px ({gate.count} tags)")
         _done = True
     ###### END PUT CODE HERE #########
     ##################################

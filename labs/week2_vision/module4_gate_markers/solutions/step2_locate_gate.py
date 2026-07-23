@@ -46,11 +46,12 @@ def update(drone):
     #### START PUT CODE HERE #########
     _timer += drone.get_delta_time()
     image = drone.camera.get_color_image()
-    hsv = cv2.cvtColor(image, cv2.COLOR_BGR2HSV)
-    mask = cv2.inRange(hsv, LOWER, UPPER)
-    coverage = np.count_nonzero(mask) / mask.size
+    gate = neo_lab.detect_gate(image)
+    if gate is None:
+        return False
+    coverage = gate.count / 4.0
     if _timer >= HOVER_TIME:
-        print(f"[Step 1] Cyan gate pixels cover {coverage * 100:.1f}% of the image")
+        print(f"[Step 1] Gate tags visible: {gate.count}/4, ids={gate.ids}")
         _done = True
 
     ###### END PUT CODE HERE #########
