@@ -20,10 +20,10 @@ if _d not in _sys.path:
 import neo_lab
 
 # -- Constants --------------------------------------------------------------
-SETPOINTS = [3.0, 6.0, 2.0]   # meters above ground, in order
+SETPOINTS = [0.5, 1.0, 0.3]   # meters above ground, in order
 KP = 0.2
 THROTTLE_LIMIT = 0.5
-TOL = 0.4
+TOL = 0.2
 HOLD_TIME = 2.0
 
 # -- Module-level state -----------------------------------------------------
@@ -72,7 +72,7 @@ def update(drone):
 
 if __name__ == "__main__":
     _drone = drone_core.create_drone()
-    _launcher = neo_lab.Launcher(3.0)
+    _launcher = neo_lab.Launcher()
 
     def start():
         _launcher.reset()

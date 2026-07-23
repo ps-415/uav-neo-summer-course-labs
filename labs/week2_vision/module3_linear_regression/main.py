@@ -2,7 +2,7 @@
 MIT BWSI Autonomous Drone Racing Course - UAV Neo
 GNU General Public License v3.0
 
-Week 2 · Module 3 — Linear Regression (Edge Following) — Main orchestrator
+Week 2 · Module 3 — Linear Regression (Line Following) — Main orchestrator
 
 Runs every step in sequence against the simulator:
     drone sim module3_linear_regression/main.py
@@ -25,8 +25,8 @@ from tasks import (
     step3_follow_line,
 )
 
-neo_lab.run_module("Week 2 · Module 3 — Linear Regression (Edge Following)", [
-    ("Step 1: Detect the Bright Edge Pixels", step1_detect_line),
+neo_lab.run_module("Week 2 · Module 3 — Linear Regression (Line Following)", [
+    ("Step 1: Detect the Line Pixels", step1_detect_line),
     ("Step 2: Fit a Line (Least Squares)", step2_fit_line),
-    ("Step 3: Follow the Edge", step3_follow_line),
+    ("Step 3: Follow the Line", step3_follow_line),
 ])
